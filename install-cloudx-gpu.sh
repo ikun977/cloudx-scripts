@@ -9,6 +9,7 @@ AUTO_REBOOT="${AUTO_REBOOT:-false}"
 LOG_FILE="${LOG_FILE:-/var/log/cloudx-gpu-install.log}"
 VERIFY_ONLY=false
 REBOOT_REQUIRED=false
+KERNEL_REBOOT_REQUIRED=false
 OS_ID=""
 OS_VERSION=""
 
@@ -158,8 +159,49 @@ install_base_packages() {
   fi
   apt_get update
   apt_get install -y --no-install-recommends \
-    ca-certificates curl gnupg pciutils kmod dkms build-essential mokutil \
-    "linux-headers-$(uname -r)"
+    ca-certificates curl gnupg pciutils kmod dkms build-essential mokutil
+  install_kernel_headers
+}
+
+package_is_available() {
+  apt-cache show "$1" >/dev/null 2>&1
+}
+
+install_kernel_headers() {
+  local running_kernel exact_headers
+  local -a fallback_packages
+  running_kernel="$(uname -r)"
+  exact_headers="linux-headers-${running_kernel}"
+  if package_is_available "$exact_headers"; then
+    apt_get install -y --no-install-recommends "$exact_headers"
+    return
+  fi
+
+  warn "headers for the running kernel are unavailable: $exact_headers"
+  case "${OS_ID}:${running_kernel}" in
+    debian:*-cloud-amd64)
+      fallback_packages=(linux-image-cloud-amd64 linux-headers-cloud-amd64)
+      ;;
+    debian:*-amd64)
+      fallback_packages=(linux-image-amd64 linux-headers-amd64)
+      ;;
+    ubuntu:*-aws)
+      fallback_packages=(linux-aws)
+      ;;
+    ubuntu:*-generic)
+      fallback_packages=(linux-generic)
+      ;;
+    *)
+      fail "no supported kernel meta-package mapping for: ${OS_ID} ${running_kernel}"
+      ;;
+  esac
+  for package in "${fallback_packages[@]}"; do
+    package_is_available "$package" || fail "required kernel package is unavailable: $package"
+  done
+  log "installing current kernel and headers: ${fallback_packages[*]}"
+  apt_get install -y "${fallback_packages[@]}"
+  KERNEL_REBOOT_REQUIRED=true
+  REBOOT_REQUIRED=true
 }
 
 assert_supported_gpu() {
@@ -336,8 +378,13 @@ finish_install() {
     REBOOT_REQUIRED=true
   fi
   if [ "$REBOOT_REQUIRED" = true ]; then
-    warn "installation finished, but a reboot is required before GPU verification"
-    warn "after reboot, rerun this installer with --verify-only"
+    if [ "$KERNEL_REBOOT_REQUIRED" = true ]; then
+      warn "the repository no longer provides headers for the running kernel"
+      warn "a current kernel and matching headers were installed"
+    else
+      warn "installation finished, but a reboot is required before GPU verification"
+    fi
+    warn "after reboot, rerun the same installation command"
     if is_true "$AUTO_REBOOT"; then
       log "AUTO_REBOOT=true; rebooting now"
       systemctl reboot
@@ -367,6 +414,10 @@ main() {
   install_base_packages
   assert_supported_gpu
   secure_boot_notice
+  if [ "$KERNEL_REBOOT_REQUIRED" = true ]; then
+    finish_install
+    return
+  fi
   ensure_driver
   ensure_docker
   install_container_toolkit

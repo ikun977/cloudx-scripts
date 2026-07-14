@@ -19,10 +19,10 @@ CloudX 服务器初始化和运维脚本库。
 sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install-cloudx-gpu.sh | sudo bash
 ```
 
-如果脚本提示需要重启，重启服务器后复制执行验收命令：
+如果脚本提示需要重启，重启服务器后重新执行同一条安装命令。脚本会从当前系统状态继续，并完成剩余安装和验收：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install-cloudx-gpu.sh | sudo bash -s -- --verify-only
+curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install-cloudx-gpu.sh | sudo bash
 ```
 
 脚本会依次完成：
@@ -46,6 +46,12 @@ curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install
 ```
 
 完整日志保存在 `/var/log/cloudx-gpu-install.log`。
+
+只检查现有环境、不安装软件时执行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install-cloudx-gpu.sh | sudo bash -s -- --verify-only
+```
 
 ## 验收结果
 
