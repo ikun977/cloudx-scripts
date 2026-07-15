@@ -19,7 +19,7 @@ CloudX 服务器初始化和运维脚本库。
 sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install-cloudx-gpu.sh | sudo bash
 ```
 
-如果脚本提示需要重启，重启服务器后重新执行同一条安装命令。脚本会从当前系统状态继续，并完成剩余安装和验收：
+如果脚本提示需要重启，默认按回车确认重启，按 `Ctrl+C` 取消重启。重启服务器后重新执行同一条安装命令。脚本会从当前系统状态继续，并完成剩余安装和验收：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install-cloudx-gpu.sh | sudo bash
@@ -33,7 +33,7 @@ curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install
 4. 安装 NVIDIA Container Toolkit，并配置 Docker GPU Runtime。
 5. 验证宿主机驱动、容器 GPU、EGL、GLX 和 NVENC 动态库。
 
-需要允许脚本在驱动安装后自动重启时执行：
+无人值守场景需要跳过确认并自动重启时执行：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install-cloudx-gpu.sh | sudo env AUTO_REBOOT=true bash

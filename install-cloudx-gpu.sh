@@ -24,7 +24,7 @@ Options:
   -h, --help     Show this help.
 
 Environment:
-  AUTO_REBOOT=true                  Reboot automatically when a reboot is required.
+  AUTO_REBOOT=true                  Reboot without prompting when a reboot is required.
   MIN_DRIVER_MAJOR=550              Minimum accepted NVIDIA driver major version.
   NVIDIA_DRIVER_PACKAGE=<package>   Override the distribution-selected driver package.
   VERIFY_IMAGE=ubuntu:24.04         Image used for the Docker GPU verification.
@@ -373,6 +373,24 @@ verify_only() {
   log "CloudX GPU host verification completed successfully"
 }
 
+prompt_reboot() {
+  if is_true "$AUTO_REBOOT"; then
+    log "AUTO_REBOOT=true; rebooting now"
+    systemctl reboot
+    return
+  fi
+  if [ -r /dev/tty ] && [ -w /dev/tty ]; then
+    printf '\n需要重启才能继续完成 NVIDIA 驱动加载。\n' >/dev/tty
+    printf '按回车确认重启，按 Ctrl+C 取消重启。' >/dev/tty
+    read -r _ </dev/tty
+    log "reboot confirmed by operator"
+    systemctl reboot
+    return
+  fi
+  warn "a reboot is required, but no interactive terminal is available"
+  warn "run: sudo reboot"
+}
+
 finish_install() {
   if [ -f /var/run/reboot-required ]; then
     REBOOT_REQUIRED=true
@@ -385,10 +403,7 @@ finish_install() {
       warn "installation finished, but a reboot is required before GPU verification"
     fi
     warn "after reboot, rerun the same installation command"
-    if is_true "$AUTO_REBOOT"; then
-      log "AUTO_REBOOT=true; rebooting now"
-      systemctl reboot
-    fi
+    prompt_reboot
     return
   fi
   verify_host_driver || fail "NVIDIA host driver verification failed"
