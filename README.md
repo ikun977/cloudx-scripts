@@ -39,6 +39,8 @@ curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install
 curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install-cloudx-gpu.sh | sudo env AUTO_REBOOT=true bash
 ```
 
+被 CloudX Agent 一键安装脚本调用时，Agent 安装器会接管最终重启提示；底层 GPU 脚本可通过 `CLOUDX_GPU_PROMPT_REBOOT=false` 只完成安装和状态返回。
+
 默认要求 NVIDIA 驱动主版本不低于 550。需要指定发行版中的驱动包时，可以执行：
 
 ```bash

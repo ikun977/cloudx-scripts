@@ -6,6 +6,7 @@ MIN_DRIVER_MAJOR="${MIN_DRIVER_MAJOR:-550}"
 NVIDIA_DRIVER_PACKAGE="${NVIDIA_DRIVER_PACKAGE:-}"
 VERIFY_IMAGE="${VERIFY_IMAGE:-ubuntu:24.04}"
 AUTO_REBOOT="${AUTO_REBOOT:-false}"
+CLOUDX_GPU_PROMPT_REBOOT="${CLOUDX_GPU_PROMPT_REBOOT:-true}"
 LOG_FILE="${LOG_FILE:-/var/log/cloudx-gpu-install.log}"
 VERIFY_ONLY=false
 REBOOT_REQUIRED=false
@@ -25,6 +26,7 @@ Options:
 
 Environment:
   AUTO_REBOOT=true                  Reboot without prompting when a reboot is required.
+  CLOUDX_GPU_PROMPT_REBOOT=false    Do not prompt; let the caller handle reboot.
   MIN_DRIVER_MAJOR=550              Minimum accepted NVIDIA driver major version.
   NVIDIA_DRIVER_PACKAGE=<package>   Override the distribution-selected driver package.
   VERIFY_IMAGE=ubuntu:24.04         Image used for the Docker GPU verification.
@@ -377,6 +379,10 @@ prompt_reboot() {
   if is_true "$AUTO_REBOOT"; then
     log "AUTO_REBOOT=true; rebooting now"
     systemctl reboot
+    return
+  fi
+  if ! is_true "$CLOUDX_GPU_PROMPT_REBOOT"; then
+    warn "a reboot is required before GPU verification"
     return
   fi
   if [ -r /dev/tty ] && [ -w /dev/tty ]; then
