@@ -55,6 +55,22 @@ curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install
 curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install-cloudx-gpu.sh | sudo bash -s -- --verify-only
 ```
 
+## 重置 Agent 安装测试机
+
+`reset-agent-install-test-host.sh` 用于把专用 Agent 测试机恢复到接近全新系统的状态，以验证后台一键安装流程。默认仅输出清理计划，不会删除任何内容：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/reset-agent-install-test-host.sh | sudo bash
+```
+
+确认清理计划后，执行实际清理并重启：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/reset-agent-install-test-host.sh | sudo bash -s -- --yes --reboot
+```
+
+实际清理默认会删除 CloudX Agent、Docker 及其数据、NVIDIA 驱动、CUDA 相关包和 NVIDIA Container Toolkit。该脚本仅用于可重建的专用 Agent 测试机，不得在 CloudX Server 或承载业务数据的服务器上执行。
+
 ## 验收结果
 
 安装成功必须同时满足：
