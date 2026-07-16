@@ -31,7 +31,8 @@ curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/install
 2. 安装内核头文件、DKMS 和 NVIDIA 驱动。
 3. 安装并启动 Docker。
 4. 安装 NVIDIA Container Toolkit，并配置 Docker GPU Runtime。
-5. 验证宿主机驱动、容器 GPU、EGL、GLX 和 NVENC 动态库。
+5. 将 NVIDIA Container Runtime 固定为完整注入图形库的 `legacy` 模式。
+6. 验证宿主机驱动、容器 GPU、EGL、GLX、NVENC 及其动态库依赖。
 
 无人值守场景需要跳过确认并自动重启时执行：
 
@@ -80,5 +81,7 @@ curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/reset-a
 - GPU 容器中存在 `libEGL_nvidia.so.0`。
 - GPU 容器中存在 `libGLX_nvidia.so.0`。
 - GPU 容器中存在 `libnvidia-encode.so.1`。
+- GPU 容器中存在 `libnvidia-glcore`、`libnvidia-glsi` 和 `libnvidia-tls`。
+- EGL、GLX 和 NVENC 动态库不存在缺失的 NVIDIA 依赖。
 
 这些检查通过后，服务器才具备安装 CloudX GPU Agent 的基础条件。Chrome NVIDIA Renderer 和实际 NVENC 编码仍由 CloudX Agent 准入检查负责。

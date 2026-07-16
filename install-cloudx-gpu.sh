@@ -331,6 +331,7 @@ install_container_toolkit() {
   apt_get update
   apt_get install -y nvidia-container-toolkit
   nvidia-ctk runtime configure --runtime=docker
+  nvidia-ctk config --set nvidia-container-runtime.mode=legacy --in-place
   systemctl restart docker
   docker info >/dev/null 2>&1 || fail "Docker did not recover after NVIDIA runtime configuration"
 }
@@ -349,14 +350,28 @@ verify_container_runtime() {
   command -v nvidia-ctk >/dev/null 2>&1 || fail "nvidia-ctk is not installed"
   log "verifying GPU access and NVIDIA graphics/video libraries inside Docker"
   docker pull "$VERIFY_IMAGE" >/dev/null
-  docker run --rm --gpus all \
+  docker run --rm --runtime=nvidia \
+    -e NVIDIA_VISIBLE_DEVICES=all \
     -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display,video \
     "$VERIFY_IMAGE" sh -ec '
       nvidia-smi -L
+      for pattern in libnvidia-glcore.so. libnvidia-glsi.so. libnvidia-tls.so.; do
+        if ! ldconfig -p | grep -Fq "$pattern"; then
+          echo "missing NVIDIA library: $pattern" >&2
+          exit 1
+        fi
+        echo "found NVIDIA library: $pattern"
+      done
       libraries="libEGL_nvidia.so.0 libGLX_nvidia.so.0 libnvidia-encode.so.1"
       for library in $libraries; do
-        if ! ldconfig -p | grep -Fq "$library"; then
+        path="$(ldconfig -p | awk -v name="$library" '\''$1 == name { print $NF; exit }'\'')"
+        if [ -z "$path" ]; then
           echo "missing NVIDIA library: $library" >&2
+          exit 1
+        fi
+        if ldd "$path" | grep -Eq "libnvidia[^[:space:]]*[[:space:]]+=>[[:space:]]+not found"; then
+          echo "$library NVIDIA dependency is missing" >&2
+          ldd "$path" >&2
           exit 1
         fi
         echo "found NVIDIA library: $library"
