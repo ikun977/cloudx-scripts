@@ -6,7 +6,7 @@ CloudX 服务器初始化和运维脚本库。
 
 - CPU 架构：`linux/amd64`
 - 操作系统：Debian 13、Ubuntu 24.04
-- GPU：NVIDIA Tesla T4、NVIDIA A10G
+- GPU：NVIDIA Tesla T4、NVIDIA A10G、NVIDIA L20
 - 容器运行时：Docker + NVIDIA Container Toolkit
 
 当前不支持其他 Linux 发行版或其他 GPU 型号，也不保留旧安装方式的兼容逻辑。
@@ -76,7 +76,7 @@ curl -fsSL https://raw.githubusercontent.com/ikun977/cloudx-scripts/main/reset-a
 
 安装成功必须同时满足：
 
-- `nvidia-smi` 能识别 T4 或 A10G。
+- `nvidia-smi` 能识别 T4、A10G 或 L20。
 - Docker 能通过 `--gpus all` 访问 GPU。
 - GPU 容器中存在 `libEGL_nvidia.so.0`。
 - GPU 容器中存在 `libGLX_nvidia.so.0`。

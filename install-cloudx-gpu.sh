@@ -13,6 +13,9 @@ REBOOT_REQUIRED=false
 KERNEL_REBOOT_REQUIRED=false
 OS_ID=""
 OS_VERSION=""
+SUPPORTED_GPU_PCI_PATTERN='10de:(1eb8|2237|26ba)'
+SUPPORTED_GPU_NAME_PATTERN='Tesla T4|A10G|NVIDIA L20'
+SUPPORTED_GPU_DESCRIPTION='T4, A10G, and L20'
 
 usage() {
   cat <<'EOF'
@@ -212,9 +215,17 @@ assert_supported_gpu() {
   devices="$(lspci -nn -d 10de: 2>/dev/null || true)"
   [ -n "$devices" ] || fail "no NVIDIA PCI device was detected"
   printf '%s\n' "$devices"
-  if ! grep -Eiq '(10de:(1eb8|2237)|Tesla T4|A10G)' <<<"$devices"; then
-    fail "unsupported NVIDIA GPU; CloudX currently supports T4 and A10G"
+  if ! gpu_pci_is_supported <<<"$devices"; then
+    fail "unsupported NVIDIA GPU; CloudX currently supports $SUPPORTED_GPU_DESCRIPTION"
   fi
+}
+
+gpu_pci_is_supported() {
+  grep -Eiq "$SUPPORTED_GPU_PCI_PATTERN"
+}
+
+gpu_name_is_supported() {
+  grep -Eiq "$SUPPORTED_GPU_NAME_PATTERN"
 }
 
 secure_boot_notice() {
@@ -341,7 +352,7 @@ verify_host_driver() {
   driver_is_healthy || return 1
   driver_meets_minimum || return 1
   names="$(nvidia-smi --query-gpu=name --format=csv,noheader)"
-  grep -Eiq '(Tesla T4|A10G)' <<<"$names" || fail "the loaded driver reports an unsupported GPU: $names"
+  gpu_name_is_supported <<<"$names" || fail "the loaded driver reports an unsupported GPU: $names"
   log "host GPU verification passed"
   nvidia-smi --query-gpu=name,uuid,driver_version,memory.total --format=csv,noheader
 }
